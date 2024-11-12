@@ -4,12 +4,12 @@ from astropy.io import fits
 from photutils.detection import IRAFStarFinder as iraf
 import matplotlib.pyplot as plt
 
-fits_data = fits.getdata('M45_Final.FTS')
+fits_data = fits.getdata('M45_final.FTS')
 sectionR = fits_data[0,:,:]
 sectionG = fits_data[1,:,:]
 sectionB = fits_data[2,:,:]
 
-iraffind = iraf(fwhm = 4.0, threshold = 1e+4, roundlo=-1.0, roundhi=1.0)
+iraffind = iraf(fwhm = 3.0, threshold = 0.00001, roundlo=-1.0, roundhi=1.0)
 sources = iraffind(sectionR-np.median(sectionR))
 
 def photometry(section,sources,r_ap,r_in,r_out,exptime,zeropoint,color):
@@ -57,9 +57,9 @@ def photometry(section,sources,r_ap,r_in,r_out,exptime,zeropoint,color):
     return mags, fluxes, error
 
 # Establishing the magnitudes, calculating error and finding 3 sigma upper limit 
-I_mag, I_fluxes, uncI = photometry(section=sectionR, sources=sources, r_ap=20.0,r_in=22,r_out=30,exptime=30,zeropoint=26.14,color='red')
-V_mag, V_fluxes, uncV = photometry(section=sectionG, sources=sources, r_ap=20.0,r_in=22,r_out=30,exptime=30,zeropoint=26.14,color='green')
-B_mag, B_fluxes, uncB = photometry(section=sectionB, sources=sources, r_ap=20.0,r_in=22,r_out=30,exptime=30,zeropoint=26.14,color='blue')
+I_mag, I_fluxes, uncI = photometry(section=sectionR, sources=sources, r_ap=20.0,r_in=28,r_out=38,exptime=13,zeropoint=0,color='red')
+V_mag, V_fluxes, uncV = photometry(section=sectionG, sources=sources, r_ap=20.0,r_in=28,r_out=38,exptime=13,zeropoint=0,color='green')
+B_mag, B_fluxes, uncB = photometry(section=sectionB, sources=sources, r_ap=20.0,r_in=28,r_out=38,exptime=13,zeropoint=0,color='blue')
 
 uncI_mag = ((2.5/np.array(I_fluxes))*uncI)
 uncV_mag = ((2.5/np.array(V_fluxes))*uncV)
@@ -73,22 +73,15 @@ print('Three sigma upper limit I = ', I_sul, 'Three sigma upper limit V = ', V_s
 BV = np.subtract(B_mag,V_mag)
 diagram, (I_mags,V_mags,B_mags) = plt.subplots(1,3,sharey=True)
 
-I_mags.set_xlabel('B-V')
-I_mags.set_ylabel('I magnitude')
-I_mags.invert_yaxis()
-I_mags.errorbar(BV,I_mag,xerr=(np.array(uncB_mag)+np.array(uncV_mag)),yerr=uncI_mag,ls='none', color='purple')
-I_mags.plot(BV,I_mag,'o',color='Red')
+def plot(name,xlabel,ylabel,x,y,xerr,yerr,errcolor,plotcolor):
+    name.set_xlabel(xlabel)
+    name.set_ylabel(ylabel)
+    name.invert_yaxis()
+    name.errorbar(x,y,xerr=xerr,yerr=yerr,ls='none', color=errcolor)
+    name.plot(x,y,'o',color=plotcolor)
 
-V_mags.set_xlabel('B-V')
-V_mags.set_ylabel('V magnitude')
-V_mags.invert_yaxis()
-V_mags.errorbar(BV,V_mag,xerr=(np.array(uncB_mag)+np.array(uncV_mag)),yerr=uncV_mag,ls='none', color='purple')
-V_mags.plot(BV,V_mag,'o',color='Green')
-
-B_mags.set_xlabel('B-V')
-B_mags.set_ylabel('B magnitude')
-B_mags.invert_yaxis()
-B_mags.errorbar(BV,B_mag,xerr=(np.array(uncB_mag)+np.array(uncV_mag)),yerr=uncB_mag,ls='none', color='purple')
-B_mags.plot(BV,B_mag,'o',color='Blue')
+plot(name=I_mags,xlabel='B-V',ylabel='I magnitude',x=BV,y=I_mag,xerr=(np.array(uncB_mag)+np.array(uncV_mag)),yerr=uncI_mag,errcolor='purple',plotcolor='Red')
+plot(name=V_mags,xlabel='B-V',ylabel='V magnitude',x=BV,y=V_mag,xerr=(np.array(uncB_mag)+np.array(uncV_mag)),yerr=uncV_mag,errcolor='purple',plotcolor='Green')
+plot(name=B_mags,xlabel='B-V',ylabel='B magnitude',x=BV,y=B_mag,xerr=(np.array(uncB_mag)+np.array(uncV_mag)),yerr=uncB_mag,errcolor='purple',plotcolor='Blue')
 
 plt.show()
